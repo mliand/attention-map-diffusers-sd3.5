@@ -1,0 +1,8 @@
+torch
+diffusers>=0.29.0
+transformers
+einops
+matplotlib
+pandas
+numpy
+torchvision
