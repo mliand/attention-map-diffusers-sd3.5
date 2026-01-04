@@ -1,12 +1,35 @@
 import argparse
 import json
+import os
+import sys
 from pathlib import Path
 from typing import Iterable, List
 
 import torch
 from diffusers import StableDiffusion3Pipeline
 
-from attention_map_diffusers import attn_maps, init_pipeline, save_attention_maps
+# try to import neighbor checkout if not installed
+try:
+    from attention_map_diffusers import attn_maps, init_pipeline, save_attention_maps
+except ImportError as exc:
+    repo_root = Path(__file__).resolve().parents[2]
+    env_path = os.environ.get("ATTENTION_MAP_DIFFUSERS_PATH") or os.environ.get("ATTN_MAP_DIFFUSERS_PATH")
+    candidates = [
+        Path(env_path) if env_path else None,
+        repo_root / "attention-map-diffusers",
+        repo_root / "attention_map_diffusers",
+    ]
+    for c in candidates:
+        if c and c.exists():
+            sys.path.insert(0, str(c))
+            break
+    try:
+        from attention_map_diffusers import attn_maps, init_pipeline, save_attention_maps
+    except ImportError:
+        raise ImportError(
+            "attention_map_diffusers 未找到。请先安装 `attention-map-diffusers`（pip install -e <path>）"
+            " 或通过环境变量 ATTENTION_MAP_DIFFUSERS_PATH/ATTN_MAP_DIFFUSERS_PATH 指向源码目录。"
+        ) from exc
 
 
 def _to_list(prompts: Iterable[str]) -> List[str]:

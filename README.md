@@ -5,11 +5,10 @@
 ## 环境
 - Python 3.10+
 - GPU（推荐 bfloat16/float16）
-- 依赖见 `requirements.txt`，额外需要本地安装 `attention_map_diffusers`（从邻近仓库 `attention-map-diffusers` 执行 `pip install -e .`）。
+- 依赖见 `requirements.txt`。跨注意力捕获逻辑已内置，无需额外安装。
 
 ```bash
 pip install -r requirements.txt
-pip install -e ../attention-map-diffusers   # 确保可用
 ```
 
 ## 用法
