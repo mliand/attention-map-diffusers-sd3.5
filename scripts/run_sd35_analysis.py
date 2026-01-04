@@ -25,6 +25,11 @@ def build_parser():
     parser.add_argument("--value_col", type=str, default="first_token_mean", choices=["first_token_mean", "first_token_share"])
     parser.add_argument("--skip_images", action="store_true")
     parser.add_argument("--dump_attn_png", action="store_true")
+    parser.add_argument("--dit_path", type=str, default=None, help="Path to DiT/MMDiT weights (file or folder)")
+    parser.add_argument("--clip_l_path", type=str, default=None, help="Path to CLIP-L weights (file or folder)")
+    parser.add_argument("--clip_g_path", type=str, default=None, help="Path to CLIP-G weights (file or folder)")
+    parser.add_argument("--t5xxl_path", type=str, default=None, help="Path to T5-XXL weights (file or folder)")
+    parser.add_argument("--vae_path", type=str, default=None, help="Path to VAE weights (file or folder)")
     return parser
 
 
@@ -44,6 +49,11 @@ def main():
         save_images=not args.skip_images,
         dump_attn_png=args.dump_attn_png,
         unconditional=True,
+        dit_path=args.dit_path,
+        clip_l_path=args.clip_l_path,
+        clip_g_path=args.clip_g_path,
+        t5xxl_path=args.t5xxl_path,
+        vae_path=args.vae_path,
     )
 
     attn_maps = torch.load(out_dir / "attn_maps.pt", map_location="cpu")

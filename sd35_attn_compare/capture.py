@@ -32,6 +32,11 @@ def capture_attention(
     save_images: bool = True,
     dump_attn_png: bool = False,
     unconditional: bool = True,
+    dit_path: str | None = None,
+    clip_l_path: str | None = None,
+    clip_g_path: str | None = None,
+    t5xxl_path: str | None = None,
+    vae_path: str | None = None,
 ) -> None:
     """
     运行 SD3.5 large，捕获跨注意力图并保存原始张量/元数据。
@@ -44,8 +49,28 @@ def capture_attention(
 
     dtype = _resolve_dtype(torch_dtype)
     pipe = StableDiffusion3Pipeline.from_pretrained(model_id, torch_dtype=dtype)
-    pipe = pipe.to(device)
 
+    def _maybe_load_component(component, path: str | None):
+        if path is None:
+            return component
+        cls = component.__class__
+        path_obj = Path(path)
+        load_kwargs = {"torch_dtype": dtype}
+        # prefer from_single_file if a file is provided and supported
+        if path_obj.is_file() and hasattr(cls, "from_single_file"):
+            try:
+                return cls.from_single_file(str(path_obj), **load_kwargs)
+            except Exception:
+                pass
+        return cls.from_pretrained(str(path_obj), **load_kwargs)
+
+    pipe.transformer = _maybe_load_component(pipe.transformer, dit_path)
+    pipe.text_encoder = _maybe_load_component(pipe.text_encoder, clip_l_path)
+    pipe.text_encoder_2 = _maybe_load_component(pipe.text_encoder_2, clip_g_path)
+    pipe.text_encoder_3 = _maybe_load_component(pipe.text_encoder_3, t5xxl_path)
+    pipe.vae = _maybe_load_component(pipe.vae, vae_path)
+
+    pipe = pipe.to(device)
     pipe = init_pipeline(pipe)
 
     result = pipe(
@@ -96,6 +121,11 @@ def build_parser() -> argparse.ArgumentParser:
         default=True,
         help="Keep unconditional branch instead of dropping it.",
     )
+    parser.add_argument("--dit_path", type=str, default=None, help="Path to DiT/MMDiT weights (file or folder)")
+    parser.add_argument("--clip_l_path", type=str, default=None, help="Path to CLIP-L weights (file or folder)")
+    parser.add_argument("--clip_g_path", type=str, default=None, help="Path to CLIP-G weights (file or folder)")
+    parser.add_argument("--t5xxl_path", type=str, default=None, help="Path to T5-XXL weights (file or folder)")
+    parser.add_argument("--vae_path", type=str, default=None, help="Path to VAE weights (file or folder)")
     return parser
 
 
@@ -113,6 +143,11 @@ def main():
         save_images=not args.no_images,
         dump_attn_png=args.dump_attn_png,
         unconditional=args.unconditional,
+        dit_path=args.dit_path,
+        clip_l_path=args.clip_l_path,
+        clip_g_path=args.clip_g_path,
+        t5xxl_path=args.t5xxl_path,
+        vae_path=args.vae_path,
     )
 
 

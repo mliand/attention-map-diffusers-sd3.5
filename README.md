@@ -51,9 +51,16 @@ python scripts/run_sd35_analysis.py \
 
 ### 4) 使用 sd-scripts 的 Gated Inference
 已将 `sd-scripts_sd3.5/sd3_gated_inference.py` 拷贝到本仓库 `scripts/`，脚本会默认尝试从 `../sd-scripts_sd3.5` 读取 `library/*` 依赖，可用环境变量 `SD_SCRIPTS_PATH` 指定原仓库路径。
+需要准备的权重文件（sd-scripts 版 SD3.5）：
+- DiT/MMDiT 主体：`mmdit.safetensors`（`--ckpt_path`）
+- CLIP-L / CLIP-G：`clip_l.safetensors`、`clip_g.safetensors`（`--clip_l`、`--clip_g`）
+- T5-XXL：`text_encoder_3.safetensors`（`--t5xxl`）
 ```bash
 python scripts/gated_sd3_infer.py \
-  --ckpt_path /path/to/sd3.5-gated.safetensors \
+  --ckpt_path /path/to/mmdit.safetensors \
+  --clip_l /path/to/clip_l.safetensors \
+  --clip_g /path/to/clip_g.safetensors \
+  --t5xxl /path/to/text_encoder_3.safetensors \
   --prompt "A photo of a cat" \
   --gate_type headwise \
   --steps 50 --dtype bf16 \
@@ -68,8 +75,14 @@ python scripts/batch_capture_analyze.py \
   --out_root outputs/batch_run \
   --model_id stabilityai/stable-diffusion-3.5-large \
   --steps 15 --guidance 4.5 \
-  --dtype bfloat16
+  --dtype bfloat16 \
+  --dit_path /path/to/mmdit.safetensors \
+  --clip_l_path /path/to/clip_l.safetensors \
+  --clip_g_path /path/to/clip_g.safetensors \
+  --t5xxl_path /path/to/text_encoder_3.safetensors \
+  --vae_path /path/to/vae.safetensors
 ```
+> 说明：`--dit_path/--clip_l_path/--clip_g_path/--t5xxl_path/--vae_path` 为可选覆盖项，接受目录或 safetensors 单文件。若不填，默认使用 `model_id` 中的对应权重。若已有完整本地 diffusers 目录（含 VAE），可直接把 `--model_id` 指向该目录并省略覆盖项。
 
 ## 设计要点
 - **提取**：直接调用 `attention_map_diffusers.init_pipeline` 注册 hook，保存原始注意力张量，确保后续可重复分析。
